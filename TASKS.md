@@ -3,7 +3,7 @@
 ## Phase 1: 核心原子
 > Phase 验收：`pytest` 全绿 + 一行脚本用 FakeProvider 完成 文件→文件
 
-- [ ] T-001 包骨架
+- [x] T-001 包骨架
   - `pyproject.toml`：src layout；运行时依赖 `openai`、`python-dotenv`；dev 依赖 `pytest`
   - `.gitignore`：`.env`、`logs/`、`__pycache__/`、`.pytest_cache/`、`dist/`、`*.egg-info/`
   - `src/llm_processor/__init__.py`：暴露 `LLMFileProcessor`、`ProviderConfig`
