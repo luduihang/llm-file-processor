@@ -51,6 +51,20 @@
   - pyproject `[project.scripts] llm-process = "llm_processor.cli:main"`；`scripts/process.py` 薄封装
   - ConfigError → stderr + 退出 2
   - Done when: `llm-process --help` 可跑 + build_processor 单测（真实配置文件 → provider.config 正确）
-- [ ] T-009 Phase 2 验收（真实 API）
+- [x] T-009 Phase 2 验收（真实 API）
   - 填 `.env`（Qwen 端点），单文件命令跑一个 qwen-bv-tts 真实 transcript
   - Done when: 输出 md 可读 + 批量模式冒烟（2 文件，重跑显示 skipped）
+
+## Phase 3: 真实数据端到端 — 玉成任务
+> Phase 验收：≥3 个真实 transcript 处理完，笔记质量可用，重跑自动跳过已完成
+
+- [x] T-010 玉成 study_note prompt + 配置
+  - `prompts/yucheng/study_note.md`（ASR 转录 → 结构化学习笔记：核心观点/术语/讲例/原话/存疑）
+  - `prompts/examples/summarize.md`、`configs/qwen.env`、`.env.example`、`.env`（本地 vLLM 8001）
+  - Done when: 单文件真实 API 跑通，输出为结构化笔记且无思考过程污染（`enable_thinking: false`）
+- [ ] T-011 全量批量：玉成 89 个 transcript → 学习笔记
+  - 输出 `~/Documents/knowledge/yucheng/study_notes/study_note_v1/`（任务名 = Prompt 版本）
+  - Done when: 89 个笔记全部生成（失败 <5% 且重跑可补齐），抽检质量可用
+- [ ] T-012 README + 收尾
+  - README（用法/配置/结构/上下游）、重跑验证 skipped、全部提交推送
+  - Done when: 重跑批量全部 skipped + 仓库与远程同步
