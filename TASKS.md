@@ -38,7 +38,7 @@
 ## Phase 2: CLI
 > Phase 验收：真实 API（Qwen）跑通一个真实 transcript，输出可读
 
-- [ ] T-007 cli.py 核心（`main(argv, processor)`，零网络）
+- [x] T-007 cli.py 核心（`main(argv, processor)`，零网络）
   - `build_parser()`：`--input`/`--input-dir` 互斥必填；`--output`/`--output-dir`；`--prompt` 必填；`--config`/`--ext`/`--force`/`--log-dir`
   - `main(argv=None, processor=None) -> int`：processor 可注入（测试用 FakeProvider）；退出码 0=成功 / 1=处理失败 / 2=用法或配置错误
   - 单文件：输入不存在 → 2；TemplateError/ProviderError/OSError → 1
@@ -46,7 +46,7 @@
   - TemplateError 属系统性错误：立即中止整批（返回 1）；ProviderError/OSError：记日志 + 跳过继续
   - 逐文件日志写 `logs/process-<ts>.log`（INFO）；stdout 汇总 `完成: X processed, Y skipped, Z failed` + 失败清单；有失败 → 退出码 1
   - Done when: tests/test_cli.py 覆盖 单文件成功 / 单文件失败退出 1 / skip / 批量混合（退出 1 + 失败清单 + 输出命名）/ 模板错误中止 / 参数错误（退出 2）
-- [ ] T-008 入口与配置接线
+- [x] T-008 入口与配置接线
   - `build_processor(config_path=None)`：load_config → OpenAICompatibleProvider → LLMFileProcessor(retries=config.retries)
   - pyproject `[project.scripts] llm-process = "llm_processor.cli:main"`；`scripts/process.py` 薄封装
   - ConfigError → stderr + 退出 2
