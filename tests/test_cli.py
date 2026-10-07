@@ -142,7 +142,7 @@ def test_batch_template_error_aborts(tmp_path, monkeypatch, capsys):
         processor=p,
     )
     assert rc == 1
-    assert list(out_dir.iterdir()) == []  # 一个都没写
+    assert not out_dir.exists() or list(out_dir.iterdir()) == []  # 一个都没写
     assert "中止" in capsys.readouterr().err
 
 
@@ -173,3 +173,74 @@ def test_build_processor_from_config_file(tmp_path):
     assert p.provider.config.model == "qwen-max"
     assert p.provider.config.api_key == "sk-test"
     assert p.retries == 5
+
+
+class ContentFakeProvider:
+    """按输入内容决定行为：命中 fail_substrings 则报错，否则返回 ok。"""
+
+    def __init__(self, fail_substrings=()):
+        self.fail_substrings = list(fail_substrings)
+        self.calls = []
+
+    def generate(self, messages):
+        text = messages[0]["content"]
+        self.calls.append(text)
+        for s in self.fail_substrings:
+            if s in text:
+                raise ProviderError(f"boom {s}")
+        return "ok"
+
+
+def test_batch_workers_all_success(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    prompt = setup_case(tmp_path, files=("a.txt", "b.txt", "c.txt", "d.txt"))
+    out_dir = tmp_path / "out"
+    provider = ContentFakeProvider()
+    processor = LLMFileProcessor(provider, retries=0, backoff_base=0)
+    rc = main(
+        ["--input-dir", str(tmp_path), "--output-dir", str(out_dir),
+         "--prompt", str(prompt), "--workers", "4"],
+        processor=processor,
+    )
+    assert rc == 0
+    assert len(provider.calls) == 4
+    for name in ("a", "b", "c", "d"):
+        assert (out_dir / f"{name}.md").read_text(encoding="utf-8") == "ok"
+
+
+def test_batch_workers_mixed_failure(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    prompt = setup_case(tmp_path, files=("a.txt", "b.txt", "c.txt"))
+    out_dir = tmp_path / "out"
+    provider = ContentFakeProvider(fail_substrings=["内容a"])
+    processor = LLMFileProcessor(provider, retries=0, backoff_base=0)
+    rc = main(
+        ["--input-dir", str(tmp_path), "--output-dir", str(out_dir),
+         "--prompt", str(prompt), "--workers", "3"],
+        processor=processor,
+    )
+    assert rc == 1
+    assert not (out_dir / "a.md").exists()
+    assert (out_dir / "b.md").exists()
+    assert (out_dir / "c.md").exists()
+    out = capsys.readouterr().out
+    assert "2 processed" in out
+    assert "1 failed" in out
+    assert "a.txt" in out
+
+
+def test_batch_workers_template_precheck_aborts(tmp_path, monkeypatch):
+    """并发模式下 Prompt 坏了：预检直接中止，零模型调用。"""
+    monkeypatch.chdir(tmp_path)
+    prompt = setup_case(tmp_path, files=("a.txt", "b.txt"), prompt_text="{{ missing }}")
+    out_dir = tmp_path / "out"
+    provider = ContentFakeProvider()
+    processor = LLMFileProcessor(provider, retries=0, backoff_base=0)
+    rc = main(
+        ["--input-dir", str(tmp_path), "--output-dir", str(out_dir),
+         "--prompt", str(prompt), "--workers", "4"],
+        processor=processor,
+    )
+    assert rc == 1
+    assert provider.calls == []
+    assert not out_dir.exists() or list(out_dir.iterdir()) == []

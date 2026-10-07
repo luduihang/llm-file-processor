@@ -92,9 +92,11 @@ src/llm_processor/
     └── openai_compatible.py
 prompts/
 ├── examples/summarize.md
-└── yucheng/study_note.md   # 玉成盲派八字：转录 → 学习笔记
+├── yucheng/study_note.md   # 玉成盲派八字：转录 → 学习笔记（知识点型）
+└── yangyanguoxue/case_study_v1.md  # 杨炎国学：案例复盘型（老师思路链条 + 先断后验）
 configs/
-└── qwen.env                # 本地 vLLM Qwen3.8-27B-W4A16
+├── qwen.env                # 本地 vLLM Qwen3.8-27B-W4A16（max_tokens 4096）
+└── qwen_case.env           # 案例笔记专用（max_tokens 8192，输出需求大）
 scripts/process.py          # python scripts/process.py ...（等价 llm-process）
 tests/                      # 37 个单元测试，零网络（FakeProvider / MockTransport）
 ```

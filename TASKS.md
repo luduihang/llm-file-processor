@@ -68,3 +68,15 @@
 - [x] T-012 README + 收尾
   - README（用法/配置/结构/上下游）、重跑验证 skipped、全部提交推送
   - Done when: 重跑批量全部 skipped + 仓库与远程同步
+
+## Phase 3.5: 杨炎国学案例管道
+> 验收：杨炎 244 个 transcript → 案例笔记，怪物文件单独处理
+
+- [x] T-013 批量并发 `--workers`（线程池）
+  - `--workers N`（默认 1 串行；本地模型可调高）
+  - 模板变量预检：worker 启动前试渲染一次，Prompt 坏了不浪费整批调用
+  - 汇总/失败清单/退出码与串行一致；日志乱序可接受（有时间戳）
+  - Done when: 单测覆盖 并发全部成功 / 并发混合失败（退出 1）/ 并发下模板预检中止（零调用）+ 默认串行行为不变
+- [ ] T-014 杨炎 244 批量（32K 上下文，workers=10）
+  - 输出 `~/Documents/knowledge/yangyanguoxue/case_notes/case_study_v1/`，config=qwen_case.env
+  - Done when: 242/244 生成（2 个 >100K 怪物预期撞上下文墙失败，单独处理）+ 重跑 skipped

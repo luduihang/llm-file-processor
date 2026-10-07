@@ -14,10 +14,12 @@ import argparse
 import logging
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from . import templates
 from .config import ConfigError, load_config
 from .processor import LLMFileProcessor, ProcessStatus
 from .providers import OpenAICompatibleProvider, ProviderError
@@ -42,6 +44,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--config", default=None, help="env 配置文件（默认 ./.env）")
     p.add_argument("--ext", default="md", help="批量模式输出扩展名（默认 md）")
     p.add_argument("--force", action="store_true", help="覆盖已有输出")
+    p.add_argument(
+        "--workers", type=int, default=1,
+        help="批量并发 worker 数（默认 1 串行；本地模型可调高）",
+    )
     p.add_argument("--log-dir", default="logs", help="日志目录（默认 logs）")
     return p
 
@@ -110,6 +116,34 @@ def _run_single(processor: LLMFileProcessor, args, prompt: Path) -> int:
     return 0
 
 
+def _precheck_prompt(prompt: Path) -> Optional[str]:
+    """worker 启动前试渲染一次：Prompt 本身坏了就快速失败，不浪费整批调用。
+
+    TemplateError 只取决于变量键集合，内置键固定，所以预检通过则全批不会触发。
+    返回错误描述；None 表示通过。
+    """
+    try:
+        templates.render(
+            prompt.read_text(encoding="utf-8"),
+            {"content": "", "filename": "", "stem": "", "input_path": ""},
+        )
+    except TemplateError as e:
+        return str(e)
+    return None
+
+
+def _process_file(processor, f: Path, out: Path, prompt: Path, force: bool):
+    """单文件 worker，返回 (status, 错误描述)。线程安全：无共享可变状态。"""
+    t0 = time.time()
+    try:
+        status = processor.process(f, out, prompt, force=force)
+    except (TemplateError, ProviderError, OSError) as e:
+        log.error("FAILED %s: %s", f.name, e)
+        return None, str(e)
+    log.info("%s %s -> %s (%.1fs)", status.value, f.name, out.name, time.time() - t0)
+    return status, None
+
+
 def _run_batch(processor: LLMFileProcessor, args, prompt: Path) -> int:
     in_dir = Path(args.input_dir)
     if not in_dir.is_dir():
@@ -121,32 +155,44 @@ def _run_batch(processor: LLMFileProcessor, args, prompt: Path) -> int:
     if not files:
         print(f"错误: 输入目录无 .txt/.md 文件: {in_dir}", file=sys.stderr)
         return 2
+
+    err = _precheck_prompt(prompt)
+    if err is not None:
+        log.error("模板错误，中止批量: %s", err)
+        print(f"失败: 模板错误，中止批量: {err}", file=sys.stderr)
+        return 1
+
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     ext = args.ext.lstrip(".")
+    tasks = [(f, out_dir / f"{f.stem}.{ext}") for f in files]
 
     processed = skipped = failed = 0
     failures: list[tuple[str, str]] = []
-    for f in files:
-        out = out_dir / f"{f.stem}.{ext}"
-        t0 = time.time()
-        try:
-            status = processor.process(f, out, prompt, force=args.force)
-        except TemplateError as e:
-            # 系统性错误（Prompt 本身有问题）：立即中止整批，不浪费后续调用
-            log.error("模板错误，中止批量: %s", e)
-            print(f"失败: 模板错误，中止批量: {e}", file=sys.stderr)
-            return 1
-        except (ProviderError, OSError) as e:
+
+    def _tally(f: Path, status, err: Optional[str]) -> None:
+        nonlocal processed, skipped, failed
+        if err is not None:
             failed += 1
-            failures.append((f.name, str(e)))
-            log.error("FAILED %s: %s", f, e)
-            continue
-        if status == ProcessStatus.SKIPPED:
+            failures.append((f.name, err))
+        elif status == ProcessStatus.SKIPPED:
             skipped += 1
         else:
             processed += 1
-        log.info("%s %s -> %s (%.1fs)", status.value, f, out.name, time.time() - t0)
+
+    if args.workers > 1:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            futures = {
+                pool.submit(_process_file, processor, f, out, prompt, args.force): f
+                for f, out in tasks
+            }
+            for fut in as_completed(futures):
+                status, err = fut.result()
+                _tally(futures[fut], status, err)
+    else:
+        for f, out in tasks:
+            status, err = _process_file(processor, f, out, prompt, args.force)
+            _tally(f, status, err)
 
     print(f"完成: {processed} processed, {skipped} skipped, {failed} failed")
     for name, err in failures:
