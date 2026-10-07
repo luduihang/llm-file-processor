@@ -62,9 +62,9 @@
   - `prompts/yucheng/study_note.md`（ASR 转录 → 结构化学习笔记：核心观点/术语/讲例/原话/存疑）
   - `prompts/examples/summarize.md`、`configs/qwen.env`、`.env.example`、`.env`（本地 vLLM 8001）
   - Done when: 单文件真实 API 跑通，输出为结构化笔记且无思考过程污染（`enable_thinking: false`）
-- [ ] T-011 全量批量：玉成 89 个 transcript → 学习笔记
+- [x] T-011 全量批量：玉成 89 个 transcript → 学习笔记
   - 输出 `~/Documents/knowledge/yucheng/study_notes/study_note_v1/`（任务名 = Prompt 版本）
   - Done when: 89 个笔记全部生成（失败 <5% 且重跑可补齐），抽检质量可用
-- [ ] T-012 README + 收尾
+- [x] T-012 README + 收尾
   - README（用法/配置/结构/上下游）、重跑验证 skipped、全部提交推送
   - Done when: 重跑批量全部 skipped + 仓库与远程同步
