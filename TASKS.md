@@ -77,7 +77,7 @@
   - 模板变量预检：worker 启动前试渲染一次，Prompt 坏了不浪费整批调用
   - 汇总/失败清单/退出码与串行一致；日志乱序可接受（有时间戳）
   - Done when: 单测覆盖 并发全部成功 / 并发混合失败（退出 1）/ 并发下模板预检中止（零调用）+ 默认串行行为不变
-- [ ] T-014 杨炎 244 批量·案例笔记（32K 上下文）
+- [ ] T-014 杨炎 244 批量·案例笔记 v1（32K 上下文，已被 v2 取代）
   - 输出 `~/Documents/knowledge/yangyanguoxue/case_notes/case_study_v1/`，config=qwen_case.env
   - 状态：跑到 203/244 时暂停（用户反馈 case_study prompt 需修改）；已生成的保留，修完 prompt 后重跑自动补差
   - Done when: 244/244 生成（2 个 >100K 怪物单独处理）
@@ -86,3 +86,8 @@
   - 独立输出目录 `~/Documents/knowledge/yangyanguoxue/dialogue_v1/`，config=qwen_dialogue.env（max_tokens 12288，输出≈输入等长）
   - 架构原则：prompt 资产在代码仓 prompts/，生成物在 knowledge/，两者永不混放；同一 prompt 不同版本用不同子目录
   - Done when: 242/244 生成（2 个怪物撞 32K 上下文墙预期失败）+ 重跑 skipped
+- [x] T-016 杨炎 244 批量·案例笔记 v2（80 并发，二次处理版 prompt）
+  - 新 prompt `prompts/yangyanguoxue/case_study_v2.md`（保留原话、判断/反馈分离、不补逻辑、不评准不准）
+  - 独立输出 `~/Documents/knowledge/yangyanguoxue/case_notes/case_study_v2/`，config=qwen_case.env（复用 8192 预算）
+  - 怪物 2 个：同 dialogue 做法，截尾部 22000 字点对点跑 + 截断标注
+  - Done when: 244/244（含 2 个截断件）+ 重跑 244 skipped
