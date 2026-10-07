@@ -15,7 +15,7 @@
   - 缺必填字段 → 抛带清晰信息的错误（指出字段名和配置文件名）
   - Done when: 单测覆盖 默认加载 / 自定义配置文件 / 缺必填字段报错
 
-- [ ] T-003 templates.py
+- [x] T-003 templates.py
   - `render(template: str, variables: dict) -> str`：替换 `{{ name }}`
   - 模板里有变量但 variables 没提供 → 抛 `TemplateError`（防止拼写错误被静默漏掉）
   - Done when: 单测覆盖 单变量 / 多变量 / 无变量 / 未知变量报错
