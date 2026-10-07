@@ -32,5 +32,5 @@
   - `ProviderError` → 指数退避重试，超过 `config.retries` 后抛出
   - Done when: FakeProvider 单测覆盖 成功 / skip / force / 渲染失败 / 重试耗尽失败
 
-- [ ] T-006 Phase 验收
+- [x] T-006 Phase 验收
   - Done when: `pytest` 全绿 + 一行脚本用 FakeProvider 完成一个 txt → md 处理
