@@ -29,13 +29,17 @@ class OpenAICompatibleProvider:
         )
 
     def generate(self, messages: List[dict]) -> str:
+        create_kwargs = dict(
+            model=self.config.model,
+            messages=messages,
+            temperature=self.config.temperature,
+            max_tokens=self.config.max_tokens,
+        )
+        if self.config.extra_body:
+            # 直通到请求体（如 vLLM 的 chat_template_kwargs.enable_thinking）
+            create_kwargs["extra_body"] = self.config.extra_body
         try:
-            resp = self._client.chat.completions.create(
-                model=self.config.model,
-                messages=messages,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-            )
+            resp = self._client.chat.completions.create(**create_kwargs)
         except Exception as exc:  # openai.APIError / 超时 / 连接错误
             raise ProviderError(f"模型调用失败: {exc}") from exc
         return resp.choices[0].message.content or ""

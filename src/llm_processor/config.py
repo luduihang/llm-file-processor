@@ -7,7 +7,8 @@ Prompt 管"做什么"，配置管"谁来做"。
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Union
 
@@ -26,6 +27,7 @@ class ProviderConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
     retries: int = 3
+    extra_body: dict = field(default_factory=dict)
 
 
 REQUIRED_VARS = ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL")
@@ -54,6 +56,14 @@ def load_config(path: Union[str, Path, None] = None) -> ProviderConfig:
     if missing:
         raise ConfigError(f"缺少必填配置 {', '.join(missing)} (文件: {env_path})")
 
+    raw_extra = (values.get("LLM_EXTRA_BODY") or "").strip()
+    try:
+        extra_body = json.loads(raw_extra) if raw_extra else {}
+    except json.JSONDecodeError as e:
+        raise ConfigError(f"LLM_EXTRA_BODY 不是合法 JSON (文件: {env_path}): {e}") from e
+    if not isinstance(extra_body, dict):
+        raise ConfigError(f"LLM_EXTRA_BODY 必须是 JSON 对象 (文件: {env_path})")
+
     return ProviderConfig(
         base_url=values["LLM_BASE_URL"],
         api_key=values["LLM_API_KEY"],
@@ -61,4 +71,5 @@ def load_config(path: Union[str, Path, None] = None) -> ProviderConfig:
         temperature=_opt(values, "LLM_TEMPERATURE", float, 0.7),
         max_tokens=_opt(values, "LLM_MAX_TOKENS", int, 4096),
         retries=_opt(values, "LLM_RETRIES", int, 3),
+        extra_body=extra_body,
     )

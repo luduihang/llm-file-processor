@@ -76,3 +76,37 @@ def test_api_error_raises_provider_error():
     )
     with pytest.raises(ProviderError):
         provider.generate([{"role": "user", "content": "hi"}])
+
+
+def test_extra_body_passed_through():
+    """config.extra_body 直通到请求体（vLLM chat_template_kwargs 场景）。"""
+    captured = []
+
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx2.Response(200, json=OK_BODY)
+
+    client = OpenAI(
+        base_url="https://api.example.com/v1",
+        api_key="sk-test",
+        max_retries=0,
+        http_client=httpx2.Client(transport=httpx2.MockTransport(handler)),
+    )
+    provider = OpenAICompatibleProvider(
+        make_config(extra_body={"chat_template_kwargs": {"enable_thinking": False}}),
+        client=client,
+    )
+    provider.generate([{"role": "user", "content": "hi"}])
+
+    assert captured[0]["chat_template_kwargs"] == {"enable_thinking": False}
+
+
+def test_no_extra_body_by_default():
+    captured = []
+
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx2.Response(200, json=OK_BODY)
+
+    make_provider(handler).generate([{"role": "user", "content": "hi"}])
+    assert "chat_template_kwargs" not in captured[0]

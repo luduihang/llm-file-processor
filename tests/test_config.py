@@ -60,3 +60,31 @@ def test_env_file_not_found_raises(tmp_path, monkeypatch):
     with pytest.raises(ConfigError) as exc:
         load_config()
     assert ".env" in str(exc.value)
+
+
+def test_extra_body_parsed(tmp_path):
+    """LLM_EXTRA_BODY 是 JSON 对象 → 解析进 config。"""
+    cfg_file = tmp_path / "c.env"
+    cfg_file.write_text(
+        "LLM_BASE_URL=http://x/v1\nLLM_API_KEY=k\nLLM_MODEL=m\n"
+        'LLM_EXTRA_BODY={"chat_template_kwargs": {"enable_thinking": false}}\n'
+    )
+    cfg = load_config(cfg_file)
+    assert cfg.extra_body == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+def test_extra_body_defaults_empty(tmp_path):
+    cfg_file = tmp_path / "c.env"
+    cfg_file.write_text("LLM_BASE_URL=http://x/v1\nLLM_API_KEY=k\nLLM_MODEL=m\n")
+    assert load_config(cfg_file).extra_body == {}
+
+
+def test_extra_body_invalid_json_raises(tmp_path):
+    cfg_file = tmp_path / "c.env"
+    cfg_file.write_text(
+        "LLM_BASE_URL=http://x/v1\nLLM_API_KEY=k\nLLM_MODEL=m\n"
+        'LLM_EXTRA_BODY={not json}\n'
+    )
+    with pytest.raises(ConfigError) as exc:
+        load_config(cfg_file)
+    assert "LLM_EXTRA_BODY" in str(exc.value)
