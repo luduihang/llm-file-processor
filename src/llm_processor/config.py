@@ -27,6 +27,7 @@ class ProviderConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
     retries: int = 3
+    timeout: int = 600
     extra_body: dict = field(default_factory=dict)
 
 
@@ -71,5 +72,6 @@ def load_config(path: Union[str, Path, None] = None) -> ProviderConfig:
         temperature=_opt(values, "LLM_TEMPERATURE", float, 0.7),
         max_tokens=_opt(values, "LLM_MAX_TOKENS", int, 4096),
         retries=_opt(values, "LLM_RETRIES", int, 3),
+        timeout=_opt(values, "LLM_TIMEOUT", int, 600),
         extra_body=extra_body,
     )

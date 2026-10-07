@@ -88,3 +88,18 @@ def test_extra_body_invalid_json_raises(tmp_path):
     with pytest.raises(ConfigError) as exc:
         load_config(cfg_file)
     assert "LLM_EXTRA_BODY" in str(exc.value)
+
+
+def test_timeout_custom(tmp_path):
+    cfg_file = tmp_path / "c.env"
+    cfg_file.write_text(
+        "LLM_BASE_URL=http://x/v1\nLLM_API_KEY=k\nLLM_MODEL=m\n"
+        "LLM_TIMEOUT=1800\n"
+    )
+    assert load_config(cfg_file).timeout == 1800
+
+
+def test_timeout_default(tmp_path):
+    cfg_file = tmp_path / "c.env"
+    cfg_file.write_text("LLM_BASE_URL=http://x/v1\nLLM_API_KEY=k\nLLM_MODEL=m\n")
+    assert load_config(cfg_file).timeout == 600

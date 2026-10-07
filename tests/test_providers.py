@@ -110,3 +110,19 @@ def test_no_extra_body_by_default():
 
     make_provider(handler).generate([{"role": "user", "content": "hi"}])
     assert "chat_template_kwargs" not in captured[0]
+
+
+def test_provider_passes_timeout_to_client(monkeypatch):
+    """LLM_TIMEOUT 传给 OpenAI 客户端：长生成（80 并发下可 >600s）不能撞默认超时。"""
+    import llm_processor.providers.openai_compatible as mod
+
+    captured = {}
+
+    class FakeClient:
+        def __init__(self, **kw):
+            captured.update(kw)
+
+    monkeypatch.setattr(mod, "OpenAI", FakeClient)
+    mod.OpenAICompatibleProvider(make_config(timeout=1800))
+    assert captured["timeout"] == 1800
+    assert captured["max_retries"] == 0

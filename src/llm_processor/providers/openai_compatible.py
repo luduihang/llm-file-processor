@@ -26,6 +26,7 @@ class OpenAICompatibleProvider:
             base_url=config.base_url,
             api_key=config.api_key,
             max_retries=0,
+            timeout=config.timeout,
         )
 
     def generate(self, messages: List[dict]) -> str:
