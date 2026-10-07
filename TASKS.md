@@ -20,7 +20,7 @@
   - 模板里有变量但 variables 没提供 → 抛 `TemplateError`（防止拼写错误被静默漏掉）
   - Done when: 单测覆盖 单变量 / 多变量 / 无变量 / 未知变量报错
 
-- [ ] T-004 providers/openai_compatible.py
+- [x] T-004 providers/openai_compatible.py
   - `OpenAICompatibleProvider(config).generate(messages) -> str`（基于 openai SDK，注入 `http_client` 以便 mock）
   - API 错误 / 超时 → 抛 `ProviderError`（重试不在这里，由 processor 层处理）
   - Done when: 单测用 mock transport 验证请求体（model / messages / temperature）与错误抛出路径
