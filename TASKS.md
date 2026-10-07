@@ -9,7 +9,7 @@
   - `src/llm_processor/__init__.py`：暴露 `LLMFileProcessor`、`ProviderConfig`
   - Done when: `pip install -e .` 成功且 `import llm_processor` 无报错
 
-- [ ] T-002 config.py
+- [x] T-002 config.py
   - `load_config(path=None) -> ProviderConfig`：默认读当前目录 `.env`；`path` 指定其他 env 文件（如 `configs/qwen.env`）
   - 字段：`base_url`、`api_key`、`model`（必填）；`temperature`、`max_tokens`、`retries`（可选，有默认值）
   - 缺必填字段 → 抛带清晰信息的错误（指出字段名和配置文件名）
