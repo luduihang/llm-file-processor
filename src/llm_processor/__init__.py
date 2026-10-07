@@ -5,6 +5,13 @@ Processor 只负责把三者连接起来。
 """
 
 from .config import ProviderConfig
-from .processor import LLMFileProcessor
+from .processor import LLMFileProcessor, ProcessStatus
+from .providers import OpenAICompatibleProvider, ProviderError
 
-__all__ = ["ProviderConfig", "LLMFileProcessor"]
+__all__ = [
+    "LLMFileProcessor",
+    "ProcessStatus",
+    "ProviderConfig",
+    "OpenAICompatibleProvider",
+    "ProviderError",
+]

@@ -25,7 +25,7 @@
   - API 错误 / 超时 → 抛 `ProviderError`（重试不在这里，由 processor 层处理）
   - Done when: 单测用 mock transport 验证请求体（model / messages / temperature）与错误抛出路径
 
-- [ ] T-005 processor.py
+- [x] T-005 processor.py
   - `LLMFileProcessor(provider).process(input_path, output_path, prompt_path, variables=None, force=False)`
   - 流程：读输入 → 渲染（内置变量 `content`/`filename`/`stem`/`input_path` + 调用方注入变量）→ `generate` → 原子写（tmp + rename）
   - 输出已存在且 `force=False` → skip（返回可区分状态，供批量层汇总）
